@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WOLFFY 3.0 | Best of You - Foo Fighters</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Permanent+Marker&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        arena: {
+                            bg: '#0a0a0a', /* Asphalt Black */
+                            panel: '#121212', /* Dark Concrete */
+                            border: '#27272a',
+                            red: '#dc2626', /* Blood Red */
+                            darkred: '#7f1d1d',
+                            concrete: '#a1a1aa',
+                            white: '#f4f4f5'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        grunge: ['"Permanent Marker"', 'cursive'],
+                        mono: ['"Share Tech Mono"', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            background-color: #0a0a0a; color: #f4f4f5; overflow: hidden; 
+            font-family: 'Outfit', sans-serif; user-select: none; 
+        }
+
+        /* GRUNGE BACKGROUNDS */
+        .concrete-texture {
+            position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: 0.15;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: overlay;
+        }
+        .red-strobe {
+            position: fixed; inset: 0; pointer-events: none; z-index: 2;
+            background: radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.1) 0%, transparent 60%);
+        }
+
+        /* SLIDE SYSTEM */
+        .slide-container { display: flex; flex-direction: column; overflow-y: auto; height: calc(100vh - 100px); scroll-behavior: smooth; position: relative; z-index: 10; }
+        .slide { display: none; opacity: 0; width: 100%; min-height: 100%; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; transition: opacity 0.5s ease; }
+        .slide.active { display: flex; opacity: 1; animation: smashIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .slide::before, .slide::after { content: ''; margin: auto; }
+
+        @keyframes smashIn {
+            0% { opacity: 0; transform: scale(1.1) translateY(20px); filter: brightness(2); }
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); }
+        }
+
+        /* UI ELEMENTS */
+        .arena-panel {
+            background: rgba(18, 18, 18, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid #27272a;
+            border-bottom: 4px solid #dc2626;
+            border-radius: 4px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.9), inset 0 0 30px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        /* NEW MECHANIC: THE ENERGY METER */
+        .energy-btn {
+            background: #121212; border: 2px solid #3f3f46; border-radius: 4px; padding: 16px;
+            font-family: 'Permanent Marker', cursive; font-size: 1.2rem; color: #a1a1aa;
+            cursor: pointer; transition: all 0.3s; text-align: left; position: relative; overflow: hidden;
+        }
+        .energy-btn:hover { border-color: #dc2626; color: #fff; transform: translateX(5px); }
+        .energy-btn.drained { border-color: #7f1d1d; color: #7f1d1d; }
+        .energy-btn.charged { border-color: #10b981; color: #10b981; }
+        
+        .battery-container {
+            width: 100%; height: 60px; background: #050505; border: 4px solid #27272a; border-radius: 8px;
+            position: relative; padding: 4px; display: flex;
+        }
+        .battery-container::after {
+            content: ''; position: absolute; right: -12px; top: 15px; width: 8px; height: 22px; background: #27272a; border-radius: 0 4px 4px 0;
+        }
+        .battery-level {
+            height: 100%; width: 50%; background: #dc2626; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.8); border-radius: 2px;
+        }
+
+        /* NEW MECHANIC: GRAFFITI WALL */
+        .brick-wall {
+            background-color: #1a1a1a;
+            background-image: linear-gradient(335deg, rgba(255,255,255,0.05) 0%, transparent 0%), linear-gradient(155deg, rgba(255,255,255,0.05) 0%, transparent 0%);
+            background-size: 60px 30px;
+            border-radius: 8px; padding: 40px; position: relative;
+        }
+        .graffiti-word {
+            font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 2rem; color: #3f3f46;
+            cursor: pointer; transition: all 0.2s; position: relative; display: inline-block; margin: 10px;
+            text-transform: uppercase;
+        }
+        .graffiti-word:hover { color: #52525b; transform: scale(1.05); }
+        .graffiti-word.sprayed { color: transparent; pointer-events: none; }
+        .graffiti-word.sprayed::after {
+            content: attr(data-positive); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-5deg);
+            font-family: 'Permanent Marker', cursive; font-size: 3rem; color: #dc2626;
+            text-shadow: 0 0 15px rgba(220,38,38,0.8); white-space: nowrap; animation: sprayAnim 0.3s forwards;
+        }
+        @keyframes sprayAnim { 0% { opacity: 0; transform: translate(-50%, -50%) rotate(-5deg) scale(2); filter: blur(10px); } 100% { opacity: 1; transform: translate(-50%, -50%) rotate(-5deg) scale(1); filter: blur(0); } }
+
+        /* BUTTONS */
+        .btn-red {
+            background: #dc2626; color: #fff; font-family: 'Outfit', sans-serif; font-weight: 800;
+            padding: 14px 32px; border-radius: 2px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px;
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.3), 0 4px 15px rgba(220, 38, 38, 0.4);
+        }
+        .btn-red:hover { background: #ef4444; transform: translateY(-2px); box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2), 0 8px 25px rgba(220, 38, 38, 0.6); }
+        .btn-red:active { transform: translateY(2px); box-shadow: none; }
+
+        .btn-concrete {
+            background: #27272a; color: #f4f4f5; font-family: 'Outfit', sans-serif; font-weight: 800;
+            padding: 14px 32px; border-radius: 2px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px;
+            border: 1px solid #3f3f46; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .btn-concrete:hover { background: #3f3f46; border-color: #a1a1aa; }
+        
+        .mcq-btn { transition: all 0.2s; cursor: pointer; }
+
+        .rec-glow { animation: recPulse 1s infinite alternate; }
+        @keyframes recPulse { 0% { box-shadow: 0 0 5px #dc2626; } 100% { box-shadow: 0 0 25px #dc2626, inset 0 0 10px #dc2626; } }
+
+        .shake { animation: shake 0.3s both; border-color: #dc2626 !important; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-1deg); } 75% { transform: translateX(5px) rotate(1deg); } }
+
+        /* THE ATTITUDE SWITCH (Lever) */
+        .lever-container { width: 150px; height: 60px; background: #0a0a0a; border: 3px solid #27272a; border-radius: 4px; position: relative; cursor: pointer; display: flex; align-items: center; padding: 0 5px; box-shadow: inset 0 5px 20px rgba(0,0,0,0.9); }
+        .lever-knob { width: 44px; height: 44px; background: #52525b; border-radius: 2px; z-index: 10; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 0 10px rgba(0,0,0,0.8); border-top: 2px solid #a1a1aa; border-bottom: 3px solid #18181b;}
+        .lever-state-left .lever-knob { transform: translateX(0); }
+        .lever-state-right .lever-knob { transform: translateX(90px); background: #dc2626; border-top-color: #f87171; border-bottom-color: #7f1d1d; box-shadow: 0 0 25px rgba(220,38,38,0.9); }
+
+        /* LYRIC HACKER */
+        .lyric-hl { color: #52525b; cursor: pointer; border-bottom: 3px solid #27272a; transition: 0.3s; padding: 0 4px; font-family: 'Permanent Marker', cursive;}
+        .lyric-hl:hover { color: #dc2626; border-bottom-color: #dc2626; }
+        .lyric-hl.active { color: #fff; background: #dc2626; border-bottom-color: #dc2626; padding: 2px 6px; transform: scale(1.05); display: inline-block; }
+        
+        /* DROP THE BEAT (Sentence Builder) */
+        .tape-blank { display: inline-block; min-width: 60px; height: 35px; border-bottom: 3px dashed #3f3f46; margin: 0 6px; vertical-align: middle; text-align: center; font-family: 'Permanent Marker', cursive; font-size: 20px; color: #a1a1aa; cursor: pointer; transition: 0.3s; }
+        .tape-blank:hover { border-color: #dc2626; color: #dc2626; }
+        .tape-blank.filled { border-bottom: 3px solid #dc2626; color: #fff; text-shadow: 0 0 10px rgba(220,38,38,0.8); }
+        .tape-blank.filled:hover { border-color: #ef4444; color: #ef4444; text-shadow: none; }
+        .tape-piece { background: #121212; color: #f4f4f5; padding: 8px 18px; border: 2px solid #3f3f46; cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 1rem; border-radius: 4px; box-shadow: 4px 4px 0px #000;}
+        .tape-piece:hover { background: #dc2626; color: #fff; border-color: #dc2626; transform: translateY(-2px); box-shadow: 0 0 15px rgba(220,38,38,0.6); }
+        .tape-piece.used { opacity: 0; pointer-events: none; transform: scale(0.8); }
+
+        /* UTILS */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .vinyl-spin { animation: spin 4s linear infinite; }
+        .paused { animation-play-state: paused; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .drawer-left { transform: translateX(-100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .drawer-left.open { transform: translateX(0); }
+    </style>
+</head>
+<body class="h-screen w-screen relative overflow-hidden flex flex-col">
+
+    <!-- STREAMING CHUNK: Setup and Backgrounds -->
+    <div class="concrete-texture"></div>
+    <div class="red-strobe"></div>
+
+    <i class="fa-solid fa-link-slash fixed top-10 left-10 text-white opacity-[0.02] text-[30vw] -rotate-12 pointer-events-none z-0"></i>
+    <i class="fa-solid fa-battery-quarter fixed bottom-0 right-[-5%] text-white opacity-[0.02] text-[40vw] rotate-12 pointer-events-none z-0"></i>
+
+    <!-- STREAMING CHUNK: Teacher Panel -->
+    <aside id="teacher-panel" class="fixed top-0 left-0 h-full w-full md:w-[450px] bg-arena-bg border-r border-arena-border z-[60] drawer-left flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.9)] pb-[100px]">
+        <div class="p-6 border-b border-arena-border flex justify-between items-center bg-[#111]">
+            <h2 class="font-grunge text-2xl text-arena-red uppercase"><i class="fa-solid fa-bolt mr-2"></i>Coach</h2>
+            <button onclick="toggleTeacher()" class="text-gray-500 hover:text-white text-2xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <div class="p-6 border-b border-arena-border bg-[#0a0a0a]">
+            <p class="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest mb-4">Instant Feedback</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="praise('BRUTAL')" class="bg-transparent border-2 border-arena-red text-arena-red py-3 text-sm font-bold hover:bg-arena-red hover:text-white transition-colors font-sans tracking-widest uppercase">BRUTAL</button>
+                <button onclick="praise('EPIC')" class="bg-transparent border-2 border-arena-concrete text-arena-concrete py-3 text-sm font-bold hover:bg-arena-concrete hover:text-black transition-colors font-sans tracking-widest uppercase">EPIC</button>
+            </div>
+        </div>
+
+        <div class="flex-1 p-6 relative flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-[10px] font-mono text-gray-500 uppercase font-bold tracking-widest">Training Notes</p>
+                <button onclick="document.getElementById('notes').value=''" class="text-xs text-arena-red hover:text-red-400 font-bold uppercase"><i class="fa-solid fa-trash mr-1"></i></button>
+            </div>
+            <textarea id="notes" class="flex-1 w-full bg-[#111] border border-arena-border rounded p-4 text-white font-mono text-lg leading-relaxed resize-none focus:outline-none focus:border-arena-red shadow-inner" placeholder="Log patient errors and B1 expressions here..."></textarea>
+        </div>
+    </aside>
+
+    <div id="praise-overlay" class="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <h1 id="praise-text" class="text-7xl md:text-9xl font-black font-grunge text-white tracking-widest uppercase drop-shadow-[0_0_40px_rgba(220,38,38,0.8)] transform scale-50 transition-transform duration-200">BRUTAL</h1>
+    </div>
+
+    <!-- STREAMING CHUNK: Main Slides Container -->
+    <main id="stage" class="flex-1 overflow-y-auto hide-scroll pb-32 slide-container">
+        
+        <!-- TRACK 01: COVER -->
+        <section class="slide active">
+            <div class="arena-panel p-10 max-w-4xl w-full flex flex-col md:flex-row items-center gap-12 relative overflow-visible">
+                <div class="relative w-64 h-64 md:w-80 md:h-80 shrink-0 group">
+                    <div class="absolute inset-y-0 right-0 w-full h-full rounded-full bg-[#050505] border-4 border-[#222] flex items-center justify-center vinyl-spin shadow-2xl transition-transform duration-700 group-hover:translate-x-12 z-10">
+                        <div class="w-24 h-24 rounded-full bg-[#111] border border-[#333] flex flex-col items-center justify-center shadow-inner relative z-10">
+                            <div class="w-4 h-4 rounded-full bg-arena-red"></div>
+                        </div>
+                        <div class="absolute inset-2 rounded-full border border-white/5"></div>
+                        <div class="absolute inset-8 rounded-full border border-white/5"></div>
+                    </div>
+                    <img src="https://i.scdn.co/image/ab67616d0000b27350d3fff0dc3d9b55f164d8d6" alt="In Your Honor Cover" class="absolute inset-0 w-full h-full object-cover rounded shadow-[0_0_40px_rgba(220,38,38,0.3)] border-2 border-[#333] z-20 transition-transform duration-700 group-hover:scale-105 filter grayscale contrast-125 hover:grayscale-0">
+                </div>
+                <div class="text-center md:text-left z-30">
+                    <span class="bg-arena-red text-white px-3 py-1 font-bold text-[10px] font-mono tracking-widest rounded-sm mb-4 inline-block uppercase shadow-[0_0_10px_rgba(220,38,38,0.5)]">B1 Intermediate</span>
+                    <h1 class="text-5xl md:text-7xl font-sans font-black leading-tight mb-2 tracking-tighter text-white uppercase drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">Best of You</h1>
+                    <p class="text-xl text-arena-concrete font-grunge uppercase tracking-widest mb-8 border-b border-[#333] pb-4 inline-block">Foo Fighters</p>
+                    
+                    <div class="space-y-3 font-mono text-xs text-gray-400">
+                        <p><strong class="text-white">Grammar:</strong> Present Continuous for Current Situations</p>
+                        <p><strong class="text-white">Theme:</strong> Burnout, Boundaries, Energy Vampires</p>
+                        <p><strong class="text-white">Mission:</strong> Protect your energy</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: Briefing & Vibe Check -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 02: The Arena</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">Setting Boundaries</h1>
+            
+            <div class="arena-panel p-10 md:p-14 w-full max-w-4xl mx-auto border-t-4 border-arena-concrete text-left relative">
+                <div class="flex items-center gap-4 mb-8 border-b border-[#333] pb-6">
+                    <i class="fa-solid fa-battery-empty text-3xl text-arena-concrete"></i>
+                    <h3 class="font-sans text-2xl text-white uppercase font-bold tracking-widest">Grammar & Vocab Focus</h3>
+                </div>
+                <div class="space-y-6 text-xl leading-relaxed text-gray-300 font-sans">
+                    <p>In this session, we will learn how to identify things that are destroying our mental peace <strong class="text-white">right now</strong>.</p>
+                    <div class="bg-[#050505] p-6 rounded border border-[#222] text-lg font-mono">
+                        We will use the <strong class="text-arena-red font-bold">Present Continuous</strong> to talk about current toxic situations, and learn Vocabulary to <strong class="text-arena-red font-bold">set boundaries</strong>.<br><br>
+                        <span class="text-arena-concrete text-sm">"<u class="decoration-arena-red">Is someone getting</u> the best of you?"</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-8 text-center tracking-widest uppercase">The Energy Vampires</h1>
+            <p class="text-xl font-sans text-gray-400 mb-12 text-center max-w-3xl">Look at your daily life right now. What drains your energy the absolute most?</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+                <button onclick="vibe(this, 'Work')" class="arena-panel p-8 text-center hover:border-arena-red transition-all border-b-4 border-b-transparent mcq-btn group">
+                    <i class="fa-solid fa-briefcase text-4xl text-gray-600 group-hover:text-arena-red mb-4 transition-colors"></i>
+                    <p class="text-xl font-sans font-bold text-white uppercase tracking-wider">The Grind</p>
+                    <p class="text-xs font-mono text-gray-500 mt-2 uppercase">Work and pressure</p>
+                </button>
+                <button onclick="vibe(this, 'People')" class="arena-panel p-8 text-center hover:border-arena-red transition-all border-b-4 border-b-transparent mcq-btn group">
+                    <i class="fa-solid fa-users-slash text-4xl text-gray-600 group-hover:text-white mb-4 transition-colors"></i>
+                    <p class="text-xl font-sans font-bold text-white uppercase tracking-wider">Toxic People</p>
+                    <p class="text-xs font-mono text-gray-500 mt-2 uppercase">Drama and negativity</p>
+                </button>
+                <button onclick="vibe(this, 'Screen')" class="arena-panel p-8 text-center hover:border-arena-red transition-all border-b-4 border-b-transparent mcq-btn group">
+                    <i class="fa-solid fa-mobile-screen-button text-4xl text-gray-600 group-hover:text-white mb-4 transition-colors"></i>
+                    <p class="text-xl font-sans font-bold text-white uppercase tracking-wider">The Screen</p>
+                    <p class="text-xs font-mono text-gray-500 mt-2 uppercase">Endless scrolling</p>
+                </button>
+            </div>
+            <div id="vibe-hub" class="hidden mt-10 p-6 bg-[#050505] rounded border-l-4 border-arena-red w-full max-w-5xl text-left shadow-lg">
+                <p class="text-arena-red font-mono text-[10px] font-bold uppercase mb-2 tracking-widest">Coach's Question</p>
+                <p class="text-xl font-sans text-white font-bold">Why is it so hard to put limits on that specific thing? Explain.</p>
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: Trivia & Deep Dive -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 04: Rock History</h2>
+            <h1 class="font-sans font-black text-4xl md:text-5xl text-white mb-10 tracking-widest text-center uppercase">The Accidental Anthem</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
+                <div class="arena-panel p-8 flex flex-col justify-center border-l-2 border-[#333]">
+                    <p class="text-xl font-sans text-gray-300 leading-relaxed mb-6">Dave Grohl (the lead singer) wrote this song quickly and originally threw it in the trash, thinking it wasn't good enough for the album.</p>
+                    <p class="text-sm font-mono text-gray-500 uppercase">Who convinced him to record and release it?</p>
+                </div>
+                <div class="flex flex-col gap-4">
+                    <button onclick="checkTrivia(this, false)" class="arena-panel p-6 text-left hover:bg-[#222] transition-colors border-l-4 border-transparent">
+                        <span class="font-sans font-bold text-lg text-gray-400 uppercase tracking-wider">A. Kurt Cobain's mother</span>
+                    </button>
+                    <button onclick="checkTrivia(this, true)" class="arena-panel p-6 text-left hover:bg-[#222] transition-colors border-l-4 border-transparent">
+                        <span class="font-sans font-bold text-lg text-gray-400 uppercase tracking-wider">B. Their manager</span>
+                    </button>
+                    <button onclick="checkTrivia(this, false)" class="arena-panel p-6 text-left hover:bg-[#222] transition-colors border-l-4 border-transparent">
+                        <span class="font-sans font-bold text-lg text-gray-400 uppercase tracking-wider">C. The fans on the internet</span>
+                    </button>
+                </div>
+            </div>
+            <div id="trivia-hub" class="hidden mt-8 w-full max-w-5xl text-left bg-black p-6 border border-[#333]">
+                <p class="text-gray-300 font-sans text-lg">Correct! Their manager pulled it out of the demos and said, "You HAVE to record this." It became the highest-charting song in Foo Fighters history.</p>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h1 class="font-grunge text-3xl md:text-5xl text-white mb-6 tracking-widest text-center bg-arena-red px-8 py-4 inline-block shadow-[4px_4px_0px_#fff]">Deep Dive</h1>
+            <p class="text-2xl font-sans text-gray-400 mb-12 text-center max-w-4xl">The title of the song.</p>
+            
+            <div class="arena-panel p-10 md:p-14 w-full max-w-4xl mx-auto border-t-2 border-white text-center shadow-2xl">
+                <p class="font-sans font-bold text-3xl text-white leading-tight mb-8 tracking-wider">"When you say 'She brings out the best IN me', it's a good thing. But when you say 'She got the best OF me', it's a terrible thing. Why?"</p>
+                <div class="h-px w-full bg-[#333] mb-8"></div>
+                <p class="font-mono text-gray-500 text-sm uppercase tracking-widest">Inspiration vs. Defeat</p>
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: New Mechanic - The Energy Meter -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 06: Lexicon</h2>
+            <h1 class="font-sans font-black text-4xl md:text-5xl text-white mb-6 tracking-widest text-center uppercase">The Energy Meter</h1>
+            <p class="font-mono text-gray-500 text-xs mb-10 text-center uppercase tracking-widest">Click the actions to see how they affect your psychological battery.</p>
+
+            <div class="w-full max-w-4xl mx-auto flex flex-col md:flex-row gap-10 items-center">
+                
+                <div class="w-full md:w-1/2 flex flex-col gap-4">
+                    <button class="energy-btn" onclick="drainEnergy(this, 'GIVE IN', 'To stop fighting and finally let the other person win or control you.')">
+                        <i class="fa-solid fa-flag-checkered mr-2 opacity-50"></i> GIVE IN
+                    </button>
+                    <button class="energy-btn" onclick="drainEnergy(this, 'BE A FOOL', 'To allow yourself to be tricked, used, or easily manipulated.')">
+                        <i class="fa-solid fa-masks-theater mr-2 opacity-50"></i> BE A FOOL
+                    </button>
+                    <button class="energy-btn" onclick="chargeEnergy(this, 'BREAK CHAINS', 'To forcefully free yourself from a toxic situation or bad habit.')">
+                        <i class="fa-solid fa-link-slash mr-2 opacity-50"></i> BREAK CHAINS
+                    </button>
+                    <button class="energy-btn" onclick="chargeEnergy(this, 'RESIST', 'To fight back and not accept poor treatment.')">
+                        <i class="fa-solid fa-shield-halved mr-2 opacity-50"></i> RESIST
+                    </button>
+                </div>
+
+                <div class="w-full md:w-1/2 arena-panel p-8 flex flex-col items-center justify-center text-center">
+                    <p class="font-sans font-bold text-gray-400 mb-6 uppercase tracking-widest text-sm">Your Energy Level</p>
+                    <div class="battery-container mb-8">
+                        <div id="battery-fill" class="battery-level"></div>
+                    </div>
+                    <div id="energy-hub" class="opacity-0 transition-opacity duration-300">
+                        <p class="font-grunge text-2xl text-white mb-2" id="energy-word">Word</p>
+                        <p class="font-sans text-gray-400 text-sm leading-relaxed" id="energy-def">Definition</p>
+                        <div class="mt-4 p-3 border-l-2 border-arena-red bg-black text-left">
+                            <span class="font-mono text-arena-red text-[10px] uppercase font-bold tracking-widest block mb-1">Discuss</span>
+                            <p class="text-white font-sans text-sm italic" id="energy-q">Question</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: Grammar Intro & The Switch -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 07: Grammar</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">The Timeline</h1>
+            
+            <div class="flex flex-col md:flex-row gap-6 w-full max-w-5xl mx-auto z-20">
+                <div class="arena-panel p-8 rounded flex-1 text-center border-t-2 border-gray-600">
+                    <p class="text-xl font-black text-white font-sans uppercase mb-1">Present Simple</p>
+                    <p class="text-xs text-gray-400 font-mono uppercase mb-6 tracking-widest border border-gray-700 inline-block px-2 py-1 rounded">The Routine</p>
+                    <p class="text-xl font-bold text-white mb-2 bg-[#050505] py-4 rounded">"My boss <span class="text-gray-400">yells</span> at me."</p>
+                    <p class="text-sm text-gray-400 leading-relaxed mt-4">A fact or a repeated habit. It happens every day.</p>
+                </div>
+                <div class="arena-panel p-8 rounded flex-1 text-center border-t-2 border-arena-red shadow-[0_0_20px_rgba(220,38,38,0.15)]">
+                    <p class="text-xl font-black text-arena-red font-sans uppercase mb-1">Present Continuous</p>
+                    <p class="text-xs text-arena-red font-mono uppercase mb-6 tracking-widest border border-arena-red inline-block px-2 py-1 rounded bg-arena-red/10">The NOW</p>
+                    <p class="text-xl font-bold text-white mb-2 bg-[#050505] py-4 rounded border border-arena-red/30">"He <span class="text-arena-red">is getting</span> the best of me."</p>
+                    <p class="text-sm text-gray-300 leading-relaxed mt-4">A temporary action happening <strong class="text-white font-black">RIGHT NOW</strong>. It has an immediate emotional impact.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 08: Mechanics</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">The Energy Switch</h1>
+            
+            <div class="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                
+                <div class="flex flex-col items-center gap-4 shrink-0">
+                    <span class="font-sans font-bold text-lg text-gray-500 uppercase tracking-widest" id="lever-lbl-1">ROUTINE</span>
+                    <div class="lever-container lever-state-left" id="grammar-lever" onclick="toggleLever()">
+                        <div class="lever-knob"></div>
+                    </div>
+                    <span class="font-sans font-bold text-lg text-arena-red uppercase tracking-widest opacity-30" id="lever-lbl-2">NOW</span>
+                    <p class="text-[10px] font-mono text-gray-500 uppercase text-center mt-2">Click to feel the impact</p>
+                </div>
+
+                <div class="flex-1 arena-panel w-full p-10 min-h-[250px] flex items-center justify-center relative overflow-hidden">
+                    <div class="text-active absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 p-8" id="text-active" style="opacity: 1; transform: translateX(0);">
+                        <p class="font-sans font-bold text-3xl text-gray-400 mb-4 text-center">"I <u class="text-white decoration-gray-500">work</u> with a toxic person."</p>
+                        <span class="font-mono text-gray-500 font-bold text-[10px] uppercase tracking-widest border border-gray-600 px-2 py-1 rounded bg-[#111]">Fact / Present Simple</span>
+                    </div>
+
+                    <div class="text-passive absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 p-8" id="text-passive" style="opacity: 0; transform: translateX(20px);">
+                        <p class="font-sans font-black text-4xl text-white mb-4 text-center leading-relaxed">"They <u class="text-arena-red decoration-arena-red">are draining</u> my energy!"</p>
+                        <span class="font-mono text-white text-[10px] font-bold uppercase tracking-widest border border-arena-red bg-arena-red px-2 py-1 rounded">Action / Present Cont.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: System Patches (Quiz) -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 09: Practice</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">System Patch I</h1>
+            
+            <div class="arena-panel p-10 md:p-14 w-full max-w-4xl mx-auto text-center border-t-2 border-[#333]">
+                <p class="font-sans text-2xl text-gray-300 mb-10 leading-relaxed">
+                    "Look at him! He <span class="text-white border-b-2 border-white px-2 pb-1"> _____ </span> a fool again."
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mx-auto">
+                    <button class="bg-black border border-[#333] p-6 font-sans font-bold text-xl text-gray-500 uppercase tracking-widest rounded hover:border-white hover:text-white transition-colors" onclick="checkPatch(this, false, 'd1-hub')">
+                        is be
+                    </button>
+                    <button class="bg-black border border-[#333] p-6 font-sans font-bold text-xl text-gray-500 uppercase tracking-widest rounded hover:border-white hover:text-white transition-colors" onclick="checkPatch(this, true, 'd1-hub')">
+                        is being
+                    </button>
+                </div>
+                
+                <div id="d1-hub" class="hidden mt-8 font-mono text-arena-red text-sm font-bold tracking-widest uppercase">> Correct. Verb To Be (is) + Verb-ING (being).</div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 10: Practice</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">System Patch II</h1>
+            
+            <div class="arena-panel p-10 md:p-14 w-full max-w-4xl mx-auto text-center border-t-2 border-[#333]">
+                <p class="font-sans text-2xl text-gray-300 mb-10 leading-relaxed">
+                    "<span class="text-white border-b-2 border-white px-2 pb-1"> _____ </span> someone getting the best of you right now?"
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mx-auto">
+                    <button class="bg-black border border-[#333] p-6 font-sans font-bold text-xl text-gray-500 uppercase tracking-widest rounded hover:border-white hover:text-white transition-colors" onclick="checkPatch(this, true, 'd2-hub')">
+                        Is
+                    </button>
+                    <button class="bg-black border border-[#333] p-6 font-sans font-bold text-xl text-gray-500 uppercase tracking-widest rounded hover:border-white hover:text-white transition-colors" onclick="checkPatch(this, false, 'd2-hub')">
+                        Are
+                    </button>
+                </div>
+                
+                <div id="d2-hub" class="hidden mt-8 font-mono text-arena-red text-sm font-bold tracking-widest uppercase">> Correct. 'Someone' uses the singular verb 'Is'.</div>
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: Visual Mission & Video -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 11: Pre-Screening</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">Visual Mission</h1>
+            
+            <div class="arena-panel p-10 md:p-14 w-full max-w-4xl mx-auto text-center border-t-2 border-[#333]">
+                <i class="fa-solid fa-video text-5xl text-gray-600 mb-8"></i>
+                <p class="font-sans font-bold text-2xl md:text-3xl text-white leading-tight mb-8">"This video is incredibly simple but visceral. It cuts between the band screaming in a dark room and random clips of animals, crashes, and human emotion. How does Dave Grohl's facial expression change during the song?"</p>
+                <button onclick="document.getElementById('vis-hub').classList.remove('hidden'); shootConfetti();" class="btn-concrete mt-4 text-sm">Acknowledge</button>
+            </div>
+            <div id="vis-hub" class="hidden mt-10 w-full max-w-4xl bg-black p-6 border border-[#333] text-left rounded shadow-lg">
+                <p class="font-sans text-arena-red font-bold text-lg">He looks like he is in literal physical pain. It is not just singing; it is a scream of pure frustration and emotional release.</p>
+            </div>
+        </section>
+
+        <section class="slide h-full">
+            <div class="flex justify-between items-end w-full max-w-5xl mb-6">
+                <div>
+                    <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-2">Track 12</h2>
+                    <h1 class="font-sans font-black text-3xl md:text-4xl text-white uppercase tracking-widest">Best of You</h1>
+                </div>
+                <span class="bg-arena-red text-white px-2 py-1 font-bold text-[10px] font-mono tracking-widest rounded uppercase animate-pulse">Official Video</span>
+            </div>
+            
+            <div class="w-full max-w-5xl overflow-hidden border-4 border-[#222] shadow-[0_0_40px_rgba(220,38,38,0.2)] relative aspect-video bg-black">
+                <iframe class="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/h_L4Rixya64?rel=0" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 13: Observation</h2>
+            <h1 class="font-sans font-black text-4xl md:text-5xl text-white mb-10 tracking-widest text-center uppercase">Fact Check</h1>
+            
+            <div class="arena-panel p-10 w-full max-w-4xl mx-auto text-center border-t-2 border-[#333]">
+                <p class="font-sans text-2xl text-white mb-10 leading-relaxed">
+                    "The random clips in the video (lions attacking, cars crashing, people crying) are meant to represent the feeling of being trapped and wanting to explode."
+                </p>
+                <div class="flex gap-6 justify-center">
+                    <button onclick="checkTF(this, true, 'tf-hub')" class="btn-concrete bg-transparent text-gray-500 border-gray-700 hover:text-white">True</button>
+                    <button onclick="checkTF(this, false, 'tf-hub')" class="btn-concrete bg-transparent text-gray-500 border-gray-700 hover:text-white">False</button>
+                </div>
+            </div>
+            <div id="tf-hub" class="hidden mt-8 w-full max-w-4xl bg-[#111] p-6 border-l-4 border-arena-red text-left shadow-lg">
+                <p class="text-white text-lg font-sans">True. The director used visual metaphors for anger, pain, and release to match the lyrical theme of breaking free from abuse.</p>
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: Lyric Hackers (with Follow-Ups) -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 14</h2>
+            <h1 class="font-sans font-black text-4xl md:text-5xl text-white mb-6 tracking-widest text-center uppercase">Scribble I</h1>
+            <p class="font-mono text-gray-500 text-xs mb-10 text-center uppercase tracking-widest">Click the underlined text</p>
+
+            <div class="w-full max-w-4xl mx-auto arena-panel p-10 md:p-14 text-center border-l-4 border-[#333]">
+                <div class="space-y-6 text-3xl font-grunge text-gray-300 leading-relaxed">
+                    <p>I was too weak to <span class="lyric-hl" onclick="hackLyric(this, 'lh-1')">give in</span></p>
+                    <p>Too strong to lose</p>
+                    <p>I'm <span class="lyric-hl" onclick="hackLyric(this, 'lh-2')">your fool</span></p>
+                </div>
+
+                <div id="lh-1" class="hidden mt-10 bg-black p-6 rounded text-left border border-[#333]">
+                    <span class="font-mono text-gray-500 font-bold text-[10px] uppercase tracking-widest">The Paralysis</span>
+                    <p class="text-white font-sans text-xl mt-2 mb-4">He didn't have the strength to surrender, but he also couldn't win. He was stuck.</p>
+                    <div class="bg-[#111] p-4 border-l-2 border-white">
+                        <span class="font-mono text-white text-[10px] uppercase font-bold tracking-widest block mb-1">Follow-Up Question</span>
+                        <p class="text-gray-300 font-sans text-lg italic">Have you ever felt "stuck" in a situation where you couldn't win but also couldn't quit?</p>
+                    </div>
+                </div>
+                <div id="lh-2" class="hidden mt-10 bg-black p-6 rounded text-left border border-[#333]">
+                    <span class="font-mono text-gray-500 font-bold text-[10px] uppercase tracking-widest">The Reality</span>
+                    <p class="text-white font-sans text-xl mt-2 mb-4">He realizes he is being manipulated and used, willingly accepting the role of the "fool".</p>
+                    <div class="bg-[#111] p-4 border-l-2 border-white">
+                        <span class="font-mono text-white text-[10px] uppercase font-bold tracking-widest block mb-1">Follow-Up Question</span>
+                        <p class="text-gray-300 font-sans text-lg italic">Can someone be highly intelligent and still become the "fool" in a relationship? How?</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 15</h2>
+            <h1 class="font-sans font-black text-4xl md:text-5xl text-white mb-6 tracking-widest text-center uppercase">Scribble II</h1>
+
+            <div class="w-full max-w-4xl mx-auto arena-panel p-10 md:p-14 text-center border-l-4 border-arena-red">
+                <div class="space-y-6 text-3xl font-grunge text-gray-300 leading-relaxed">
+                    <p><span class="lyric-hl" onclick="hackLyric(this, 'lh-3')">Is someone getting</span> the best</p>
+                    <p>The best, the best, the best <span class="lyric-hl" onclick="hackLyric(this, 'lh-4')">of you?</span></p>
+                </div>
+
+                <div id="lh-3" class="hidden mt-10 bg-black p-6 rounded text-left border border-[#333]">
+                    <span class="font-mono text-gray-500 font-bold text-[10px] uppercase tracking-widest">Present Continuous</span>
+                    <p class="text-white font-sans text-xl mt-2 mb-4">He is asking about right NOW. Is this toxic draining happening to you at this exact moment in your life?</p>
+                </div>
+                <div id="lh-4" class="hidden mt-10 bg-black p-6 rounded text-left border border-[#333]">
+                    <span class="font-mono text-gray-500 font-bold text-[10px] uppercase tracking-widest">The Parasite</span>
+                    <p class="text-white font-sans text-xl mt-2 mb-4">Taking your energy, your time, and your positive qualities, leaving you empty.</p>
+                    <div class="bg-[#111] p-4 border-l-2 border-arena-red">
+                        <span class="font-mono text-arena-red text-[10px] uppercase font-bold tracking-widest block mb-1">Follow-Up Question</span>
+                        <p class="text-gray-300 font-sans text-lg italic">How can you truly tell when a job or a person is getting the best of you?</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 16</h2>
+            <h1 class="font-sans font-black text-4xl md:text-5xl text-white mb-6 tracking-widest text-center uppercase">Scribble III</h1>
+
+            <div class="w-full max-w-4xl mx-auto arena-panel p-10 md:p-14 text-center border-l-4 border-white">
+                <div class="space-y-6 text-3xl font-grunge text-gray-300 leading-relaxed">
+                    <p>Has someone taken your faith?</p>
+                    <p>It's real, the pain you feel</p>
+                    <p>You trust, you must <span class="lyric-hl" onclick="hackLyric(this, 'lh-5')">confess</span></p>
+                    <p>Is someone getting the best of you?</p>
+                    <p><span class="lyric-hl" onclick="hackLyric(this, 'lh-6')">Break out, break out!</span></p>
+                </div>
+
+                <div id="lh-5" class="hidden mt-10 bg-black p-6 rounded text-left border border-[#333]">
+                    <span class="font-mono text-gray-500 font-bold text-[10px] uppercase tracking-widest">The Admission</span>
+                    <p class="text-white font-sans text-xl mt-2 mb-4">Before you can fix the problem, you must admit that the problem exists.</p>
+                </div>
+                <div id="lh-6" class="hidden mt-10 bg-black p-6 rounded text-left border border-[#333]">
+                    <span class="font-mono text-gray-500 font-bold text-[10px] uppercase tracking-widest">The Command</span>
+                    <p class="text-white font-sans text-xl mt-2 mb-4">Escape! Don't accept the abuse anymore. Break the chains.</p>
+                    <div class="bg-[#111] p-4 border-l-2 border-white">
+                        <span class="font-mono text-white text-[10px] uppercase font-bold tracking-widest block mb-1">Follow-Up Question</span>
+                        <p class="text-gray-300 font-sans text-lg italic">What is the first step a person should take to "break out" of a bad routine?</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: Minigames -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-2 z-20 text-center">Track 17 • Minigame</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-8 tracking-widest text-center uppercase">Drop the Beat</h1>
+            <p class="text-sm text-gray-400 mb-8 text-center z-20 font-mono">> Click the words to build the B1 Question.</p>
+            
+            <div id="t-blanks-container" class="arena-panel p-8 md:p-12 text-center w-full max-w-4xl mx-auto z-20 relative transition-transform">
+                <div class="text-base md:text-xl font-bold mb-10 text-white flex flex-wrap justify-center items-center gap-y-4 font-sans">
+                    "<span class="tape-blank" id="t-blank1" onclick="returnTape(1)"></span> 
+                     <span class="tape-blank" id="t-blank2" onclick="returnTape(2)"></span> 
+                     <span class="tape-blank" id="t-blank3" onclick="returnTape(3)"></span> 
+                     <span class="tape-blank" id="t-blank4" onclick="returnTape(4)"></span> 
+                     <span class="tape-blank" id="t-blank5" onclick="returnTape(5)"></span> 
+                     of you?"
+                </div>
+                <div class="flex gap-3 justify-center flex-wrap" id="tape-bank">
+                    <div class="tape-piece" onclick="fillTape(this, 'someone')">someone</div>
+                    <div class="tape-piece" onclick="fillTape(this, 'getting')">getting</div>
+                    <div class="tape-piece" onclick="fillTape(this, 'Is')">Is</div>
+                    <div class="tape-piece" onclick="fillTape(this, 'best')">best</div>
+                    <div class="tape-piece" onclick="fillTape(this, 'the')">the</div>
+                </div>
+            </div>
+            <div id="tape-hub" class="hidden mt-4 p-3 bg-arena-red/10 border-l-2 border-arena-red text-white font-bold text-sm md:text-base w-full max-w-4xl mx-auto text-center z-20 rounded font-mono">
+                > "Is someone getting the best of you?"
+            </div>
+        </section>
+
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-2 z-20 text-center">Track 18 • Minigame</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white z-20 text-center uppercase mb-8">Catch the Bug</h1>
+            <p class="text-sm text-gray-400 mb-8 text-center z-20 font-mono">Click the incorrect word to fix the grammar glitch.</p>
+            
+            <div class="text-2xl md:text-4xl font-black font-sans arena-panel p-10 md:p-14 text-center text-white w-full max-w-4xl mx-auto z-20 uppercase tracking-widest">
+                "<span id="bug-word" class="cursor-pointer border-b-4 border-dashed border-[#ef4444] text-[#ef4444] pb-1 transition-colors hover:bg-[#ef4444] hover:text-white rounded px-2" onclick="fixBug()">Are</span> someone getting the best of you?"
+            </div>
+            
+            <div id="bug-input-container" class="hidden mt-8 flex-col items-center gap-4 w-full max-w-sm mx-auto z-20">
+                <div class="flex gap-3 w-full">
+                    <input type="text" id="bug-input" class="flex-1 bg-[#050505] border-2 border-[#27272a] rounded px-4 py-3 text-xl font-bold text-white text-center focus:border-arena-red outline-none uppercase font-mono" placeholder="Type fix">
+                    <button onclick="checkBug()" class="bg-arena-red text-white font-black px-6 py-3 rounded hover:bg-white hover:text-black transition-colors font-mono uppercase">FIX</button>
+                </div>
+            </div>
+            
+            <div id="bug-hub" class="hidden mt-6 p-4 bg-emerald-500/10 border-l-4 border-emerald-500 font-bold text-emerald-500 w-full max-w-4xl mx-auto text-center text-sm md:text-base z-20 rounded font-mono">
+                > SYSTEM RESTORED: "IS someone getting..." (Someone is singular).
+            </div>
+        </section>
+
+        <!-- STREAMING CHUNK: Sequencing & Roleplay -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 19: Sequencing</h2>
+            <h1 class="font-sans font-black text-4xl md:text-5xl text-white mb-6 tracking-widest text-center uppercase">The Fight Cycle</h1>
+            <p class="font-mono text-gray-500 text-xs mb-10 text-center uppercase tracking-widest">Click the stages in chronological order</p>
+
+            <div class="arena-panel p-10 w-full max-w-4xl mx-auto">
+                <div class="flex flex-col gap-4 w-full" id="timeline-container">
+                    <div class="bg-black border border-[#333] p-6 rounded text-xl font-sans font-bold flex items-center justify-between cursor-pointer hover:border-white transition-colors timeline-item text-gray-400" data-order="3" onclick="selectTimeline(this)">
+                        <span>The Resistance ("Were you born to resist?")</span>
+                        <span class="timeline-number font-sans font-black text-white text-xl hidden"></span>
+                    </div>
+                    <div class="bg-black border border-[#333] p-6 rounded text-xl font-sans font-bold flex items-center justify-between cursor-pointer hover:border-white transition-colors timeline-item text-gray-400" data-order="1" onclick="selectTimeline(this)">
+                        <span>The Confession ("I'm your fool")</span>
+                        <span class="timeline-number font-sans font-black text-white text-xl hidden"></span>
+                    </div>
+                    <div class="bg-black border border-[#333] p-6 rounded text-xl font-sans font-bold flex items-center justify-between cursor-pointer hover:border-white transition-colors timeline-item text-gray-400" data-order="4" onclick="selectTimeline(this)">
+                        <span>The Freedom ("Break out!")</span>
+                        <span class="timeline-number font-sans font-black text-white text-xl hidden"></span>
+                    </div>
+                    <div class="bg-black border border-[#333] p-6 rounded text-xl font-sans font-bold flex items-center justify-between cursor-pointer hover:border-white transition-colors timeline-item text-gray-400" data-order="2" onclick="selectTimeline(this)">
+                        <span>The Drain ("Is someone getting the best of you?")</span>
+                        <span class="timeline-number font-sans font-black text-white text-xl hidden"></span>
+                    </div>
+                </div>
+            </div>
+            <div id="timeline-hub" class="hidden mt-6 p-4 border-l-4 border-arena-red bg-black font-mono text-gray-400 text-[10px] font-bold w-full max-w-4xl mx-auto text-left tracking-widest uppercase">> Sequence clear. From submission to liberation.</div>
+        </section>
+
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 20: Tone</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">Vocal Booth</h1>
+            
+            <div class="arena-panel p-10 md:p-14 w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between text-center gap-8 border-t-2 border-[#333]">
+                <div class="w-full md:w-5/12 bg-black p-8 rounded border border-[#222]">
+                    <span class="block text-gray-600 font-mono text-xs font-bold uppercase tracking-widest mb-4">Singing Style</span>
+                    <span class="text-2xl font-bold font-sans text-white tracking-widest uppercase">Pitch Perfect</span>
+                </div>
+                <div class="text-4xl text-arena-red hidden md:block"><i class="fa-solid fa-microphone-lines"></i></div>
+                <div class="w-full md:w-5/12 bg-[#111] p-8 rounded shadow-[0_0_20px_rgba(220,38,38,0.15)] border border-arena-red">
+                    <span class="block text-arena-red font-mono text-xs font-bold uppercase tracking-widest mb-4">Rock Style</span>
+                    <span class="text-3xl font-bold font-sans text-white tracking-widest uppercase"><span class="font-grunge text-arena-red">Pure Passion</span></span>
+                </div>
+            </div>
+            <p class="text-gray-400 font-sans mt-10 text-center max-w-2xl text-xl">
+                Dave Grohl screams until his voice breaks. In Rock, conveying the raw emotion is much more important than hitting the perfect musical note. Read the lyrics with anger!
+            </p>
+        </section>
+
+        <section class="slide" id="slide-rapid">
+            <h2 class="font-mono text-black bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-[0.3em] mb-4 rounded inline-block">High Pressure</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-6 tracking-widest text-center uppercase">Interrogation</h1>
+            <p class="font-sans text-gray-400 text-xl mb-10 text-center max-w-2xl">Answer using the B1 expressions. You have <strong class="text-arena-red">15 seconds</strong> per question!</p>
+
+            <div class="arena-panel p-10 rounded w-full max-w-4xl mx-auto text-center border-4 border-[#333] relative overflow-hidden" id="rap-container">
+                <div id="rap-bg-flash" class="absolute inset-0 bg-arena-red opacity-0 pointer-events-none transition-opacity duration-300"></div>
+                <div class="relative z-10">
+                    <div class="text-5xl mb-6 text-gray-500 inline-block p-4"><i class="fa-solid fa-stopwatch"></i></div>
+                    <p class="font-sans font-bold text-3xl md:text-4xl text-white mb-10 h-24 flex items-center justify-center" id="rap-q">"What usually gets the best of you on a Monday morning?"</p>
+                    
+                    <div class="w-full h-2 bg-black mb-8 overflow-hidden rounded border border-[#333]">
+                        <div id="rap-timer" class="h-full bg-arena-red w-full transition-all linear"></div>
+                    </div>
+
+                    <button id="rap-btn" onclick="startRapid()" class="btn-concrete px-10 py-4 text-xl border border-[#333]">Enter Ring</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h2 class="font-mono text-white bg-arena-red px-2 py-1 text-[10px] font-bold uppercase tracking-[0.3em] mb-4 rounded inline-block">Roleplay</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">The Confession</h1>
+
+            <div class="w-full max-w-[340px] mx-auto bg-[#0a0a0a] rounded-[2rem] border-8 border-[#111] h-[550px] shadow-[0_20px_50px_rgba(0,0,0,0.9)] relative flex flex-col overflow-hidden">
+                <div class="bg-[#050505] p-4 text-center border-b border-[#222] flex justify-between items-center">
+                    <span class="font-sans font-bold text-arena-red text-xs animate-pulse">REC</span>
+                    <p class="font-sans font-bold text-gray-500 text-sm">To: Coach</p>
+                    <i class="fa-solid fa-microphone text-gray-600"></i>
+                </div>
+                
+                <div class="flex-1 p-8 flex flex-col justify-center text-center bg-[#0a0a0a] relative">
+                    <p class="font-sans font-bold text-gray-300 text-lg mb-6 leading-relaxed relative z-10">Record a 45s audio confessing your biggest weakness right now.</p>
+                    <div class="bg-[#111] p-4 border border-[#222] rounded-sm relative z-10 text-left">
+                        <p class="font-mono text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-2">Instructions:</p>
+                        <p class="font-sans text-sm text-gray-300">Start with: <strong class="text-white">"I've got a confession to make."</strong></p>
+                        <p class="font-sans text-sm text-gray-300 mt-2">Use the Present Continuous to say what is <strong class="text-arena-red underline">getting the best of you</strong>.</p>
+                    </div>
+                </div>
+
+                <div class="bg-[#050505] p-6 border-t border-[#222] flex flex-col items-center justify-center h-40 relative">
+                    <button id="vn-btn" onmousedown="startVN()" onmouseup="stopVN()" onmouseleave="stopVN()" ontouchstart="startVN()" ontouchend="stopVN()" class="w-20 h-20 rounded-full bg-arena-red flex items-center justify-center text-white text-3xl transition-transform active:scale-95 border-4 border-[#111] shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+
+                    <div id="vn-overlay" class="absolute inset-0 bg-[#0a0a0a] flex flex-col items-center justify-center gap-4 opacity-0 pointer-events-none transition-opacity px-6 border-t border-[#222]">
+                        <span class="font-sans font-black text-xl text-arena-red uppercase tracking-widest rec-glow px-3 py-1 rounded">Recording</span>
+                        <div class="w-full h-1 bg-[#111] overflow-hidden">
+                            <div id="vn-prog" class="h-full bg-arena-red w-0"></div>
+                        </div>
+                        <span id="vn-time" class="font-mono font-bold text-arena-red text-sm">0:00 / 0:45</span>
+                    </div>
+                </div>
+            </div>
+            <div id="vn-hub" class="hidden mt-6 text-center font-mono text-gray-500 text-xs font-bold tracking-widest uppercase animate-pulse">> Audio Submitted. Stay strong.</div>
+        </section>
+
+        <!-- STREAMING CHUNK: Crossroads & New Mechanic (Graffiti Wall) -->
+        <section class="slide">
+            <h2 class="font-mono text-black bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-[0.3em] mb-2 text-center rounded inline-block">The Dilemma</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">The Crossroads</h1>
+
+            <div class="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-6 items-stretch h-full min-h-[400px]">
+                <div class="md:w-1/3 arena-panel p-8 text-center flex flex-col justify-center border-t-2 border-[#333]">
+                    <i class="fa-solid fa-scale-balanced text-5xl text-gray-500 mb-6"></i>
+                    <p class="font-sans font-bold text-xl text-white mb-6">You have an incredible job that pays a fortune, but your boss constantly yells at you and "gets the best of you" every day.</p>
+                    <p class="font-mono text-[10px] text-gray-500 font-bold uppercase tracking-widest">Choose and defend for 30s.</p>
+                </div>
+
+                <div class="md:w-2/3 flex flex-col gap-4 relative" id="cross-options">
+                    <button onclick="selectPath('white')" class="flex-1 bg-black border border-[#333] rounded border-l-8 border-l-white flex flex-col justify-center p-8 text-left group hover:bg-[#111] transition-colors">
+                        <h3 class="font-sans font-black text-3xl text-white mb-2 group-hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-all uppercase">The Contract</h3>
+                        <p class="font-sans text-gray-400">Give in to the stress. The money is too good to leave. You accept being the "fool" in exchange for financial security.</p>
+                    </button>
+                    <button onclick="selectPath('arena-red')" class="flex-1 bg-black border border-[#333] rounded border-l-8 border-l-arena-red flex flex-col justify-center p-8 text-left group hover:bg-[#111] transition-colors">
+                        <h3 class="font-sans font-black text-3xl text-white mb-2 group-hover:text-arena-red transition-colors uppercase">Break Chains</h3>
+                        <p class="font-sans text-gray-400">Quit immediately, even without a backup plan. Your mental health and self-respect are more important than any salary.</p>
+                    </button>
+                </div>
+
+                <div class="md:w-2/3 hidden arena-panel rounded flex-col items-center justify-center p-10 border-t-4" id="cross-timer">
+                    <h3 class="font-sans font-black text-3xl text-white mb-6 tracking-widest uppercase" id="ct-title">Defend your choice!</h3>
+                    <div class="w-full h-2 bg-black rounded mb-8 overflow-hidden shadow-inner border border-[#333]">
+                        <div id="ct-bar" class="h-full w-full transition-all linear"></div>
+                    </div>
+                    <p class="font-mono text-5xl font-bold text-white" id="ct-clock">0:30</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEW MECHANIC: THE GRAFFITI WALL -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-4">Track 24: Catharsis</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-6 tracking-widest text-center uppercase">The Wall</h1>
+            <p class="text-sm text-gray-400 mb-10 text-center font-mono">> Click the toxic words to rewrite them.</p>
+
+            <div class="w-full max-w-4xl mx-auto brick-wall text-center shadow-2xl border-4 border-[#050505]">
+                <div class="flex flex-wrap justify-center gap-8 py-10" id="graffiti-container">
+                    <span class="graffiti-word" data-positive="STRONG" onclick="sprayWord(this)">Weak</span>
+                    <span class="graffiti-word" data-positive="WISE" onclick="sprayWord(this)">Fool</span>
+                    <span class="graffiti-word" data-positive="RESPECTED" onclick="sprayWord(this)">Abused</span>
+                    <span class="graffiti-word" data-positive="VICTORIOUS" onclick="sprayWord(this)">Defeated</span>
+                </div>
+            </div>
+            
+            <div id="graffiti-hub" class="hidden mt-8 p-6 bg-[#111] rounded border-l-4 border-arena-red w-full max-w-4xl mx-auto text-left shadow-lg">
+                <p class="text-arena-red font-mono text-[10px] font-bold uppercase mb-2 tracking-widest">Mind Cleared</p>
+                <p class="text-xl font-sans text-white">You have successfully broken the chains. Do not let anyone get the best of you again.</p>
+            </div>
+        </section>
+
+        <!-- TRACK 25: PLATINUM RECORD -->
+        <section class="slide">
+            <h2 class="font-mono text-arena-red text-[10px] font-bold uppercase tracking-[0.3em] mb-2 text-center">Track 25</h2>
+            <h1 class="font-sans font-black text-4xl md:text-6xl text-white mb-10 tracking-widest text-center uppercase">Curtain Call</h1>
+            <div class="text-center relative z-20 flex flex-col items-center justify-center h-full">
+                <div class="relative mb-12">
+                    <div class="absolute inset-0 bg-arena-red rounded-full blur-[60px] opacity-20 w-64 h-64"></div>
+                    <div class="w-72 h-72 rounded-full border-[10px] border-[#111] flex flex-col items-center justify-center bg-[#050505] shadow-2xl relative vinyl-spin z-10">
+                        <div class="absolute inset-2 rounded-full border border-white/5"></div>
+                        <div class="absolute inset-6 rounded-full border border-white/5"></div>
+                        <div class="w-24 h-24 rounded-full bg-[#111] border-4 border-[#222] flex flex-col items-center justify-center shadow-inner z-20 overflow-hidden relative">
+                            <img src="https://i.scdn.co/image/ab67616d0000b27350d3fff0dc3d9b55f164d8d6" class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen grayscale">
+                            <div class="w-4 h-4 rounded-full bg-black relative z-30 border border-white/20"></div>
+                        </div>
+                    </div>
+                </div>
+                <h1 class="text-5xl lg:text-7xl font-sans font-black mb-4 tracking-tighter text-white uppercase drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]">Platinum Record</h1>
+                <p class="text-xl text-gray-500 font-sans font-bold mb-12">"You broke the chains."</p>
+                <div class="flex gap-4">
+                    <button onclick="rate(1)" class="star text-4xl opacity-30 hover:opacity-100 transition-all cursor-pointer grayscale hover:grayscale-0">⭐</button>
+                    <button onclick="rate(2)" class="star text-4xl opacity-30 hover:opacity-100 transition-all cursor-pointer grayscale hover:grayscale-0">⭐</button>
+                    <button onclick="rate(3)" class="star text-4xl opacity-30 hover:opacity-100 transition-all cursor-pointer grayscale hover:grayscale-0">⭐</button>
+                    <button onclick="rate(4)" class="star text-4xl opacity-30 hover:opacity-100 transition-all cursor-pointer grayscale hover:grayscale-0">⭐</button>
+                    <button onclick="rate(5)" class="star text-4xl opacity-30 hover:opacity-100 transition-all cursor-pointer grayscale hover:grayscale-0">⭐</button>
+                </div>
+                <button onclick="location.reload()" class="mt-12 px-10 py-4 btn-red text-sm">Eject Tape</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- PLAYER CONTROLS (Footer) -->
+    <footer class="h-[100px] bg-[#050505] border-t border-[#222] fixed bottom-0 w-full z-40 flex items-center justify-between px-6 lg:px-8 shadow-[0_-10px_30px_rgba(0,0,0,0.9)]">
+        <div class="flex items-center gap-4 w-1/3">
+            <div class="w-14 h-14 rounded bg-[#111] border border-[#333] hidden md:flex items-center justify-center shadow-[0_0_10px_rgba(0,0,0,0.8)] overflow-hidden">
+                <img src="https://i.scdn.co/image/ab67616d0000b27350d3fff0dc3d9b55f164d8d6" alt="Cover" class="w-full h-full object-cover filter contrast-125 grayscale hover:grayscale-0 transition-all">
+            </div>
+            <div>
+                <h4 class="font-sans font-bold text-white text-lg tracking-wider uppercase">Best of You</h4>
+                <p class="text-gray-500 text-[10px] font-mono uppercase font-bold tracking-widest">Wolffy Studios</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col items-center w-1/3 gap-1">
+            <div class="flex items-center gap-6 md:gap-8">
+                <button onclick="prevSlide()" id="btn-prev" class="text-gray-600 hover:text-white transition-colors disabled:opacity-30"><i class="fa-solid fa-backward-step text-xl"></i></button>
+                <button onclick="togglePlay(this)" class="w-12 h-12 rounded-full bg-[#111] border border-[#333] text-white flex items-center justify-center hover:border-white transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)]"><i id="icon-play" class="fa-solid fa-play ml-1 hidden"></i><i id="icon-pause" class="fa-solid fa-pause"></i></button>
+                <button onclick="nextSlide()" id="btn-next" class="text-gray-600 hover:text-white transition-colors disabled:opacity-30"><i class="fa-solid fa-forward-step text-xl"></i></button>
+            </div>
+            <div class="w-full max-w-xs flex items-center gap-2">
+                <span class="text-[9px] font-mono text-gray-600" id="cur-step">01</span>
+                <div class="flex-1 h-1 bg-[#111] rounded overflow-hidden">
+                    <div id="prog-bar" class="h-full bg-arena-red w-0 transition-all duration-300 shadow-[0_0_5px_#dc2626]"></div>
+                </div>
+                <span class="text-[9px] font-mono text-gray-600">25</span>
+            </div>
+        </div>
+
+        <div class="w-1/3 flex justify-end gap-4">
+            <button onclick="toggleTeacher()" class="bg-[#111] border border-[#333] w-10 h-10 md:w-12 md:h-12 rounded flex items-center justify-center text-gray-500 hover:text-white transition-colors">
+                <i class="fa-solid fa-bolt text-sm"></i>
+            </button>
+            <button onclick="toggleFS()" class="bg-[#111] border border-[#333] w-10 h-10 md:w-12 md:h-12 rounded hidden md:flex items-center justify-center text-gray-500 hover:text-white transition-colors">
+                <i class="fa-solid fa-expand text-sm"></i>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        let current = 0;
+        const slides = document.querySelectorAll('.slide');
+        
+        function updateStage() {
+            slides.forEach(s => s.classList.remove('active'));
+            slides[current].classList.add('active');
+            
+            document.getElementById('cur-step').innerText = (current + 1).toString().padStart(2, '0');
+            document.getElementById('prog-bar').style.width = `${(current / (slides.length - 1)) * 100}%`;
+            document.getElementById('btn-prev').disabled = current === 0;
+            document.getElementById('btn-next').disabled = current === slides.length - 1;
+            document.getElementById('stage').scrollTop = 0;
+            
+            clearInterval(rapInt); clearInterval(vnInt); clearInterval(crossInt);
+        }
+
+        function nextSlide() { if(current < slides.length - 1) { current++; updateStage(); } }
+        function prevSlide() { if(current > 0) { current--; updateStage(); } }
+        function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else document.exitFullscreen(); }
+
+        let isPlaying = true;
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('icon-play').classList.toggle('hidden', isPlaying);
+            document.getElementById('icon-pause').classList.toggle('hidden', !isPlaying);
+            document.querySelectorAll('.vinyl-spin').forEach(el => el.classList.toggle('paused', !isPlaying));
+        }
+
+        function toggleTeacher() { document.getElementById('teacher-panel').classList.toggle('open'); }
+        
+        function praise(txt) {
+            toggleTeacher();
+            const ov = document.getElementById('praise-overlay');
+            const pt = document.getElementById('praise-text');
+            pt.innerText = txt;
+            ov.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => pt.classList.replace('scale-50', 'scale-100'), 50);
+            shootConfetti();
+            setTimeout(() => { 
+                pt.classList.replace('scale-100', 'scale-50'); 
+                ov.classList.add('opacity-0', 'pointer-events-none'); 
+            }, 2000);
+        }
+
+        function vibe(btn, text) {
+            document.getElementById('vibe-hub').classList.remove('hidden');
+            document.querySelectorAll('.mcq-btn').forEach(b => b.classList.remove('border-white', 'border-arena-red'));
+            btn.classList.add('border-arena-red');
+            shootConfetti(0.5);
+        }
+
+        function checkTrivia(btn, isCorrect) {
+            const btns = btn.parentElement.querySelectorAll('button');
+            btns.forEach(b => b.disabled = true);
+            if(isCorrect) {
+                btn.classList.add('border-white');
+                btn.querySelector('span').classList.replace('text-gray-400', 'text-white');
+                document.getElementById('trivia-hub').classList.remove('hidden');
+                shootConfetti();
+            } else {
+                btn.classList.add('shake', 'border-arena-red');
+                btn.querySelector('span').classList.replace('text-gray-400', 'text-arena-red');
+            }
+        }
+
+        // --- NEW MECHANIC: THE ENERGY METER ---
+        let currentEnergy = 50; // Starts at 50%
+        
+        function updateEnergyMeter() {
+            const fill = document.getElementById('battery-fill');
+            fill.style.width = currentEnergy + '%';
+            
+            if(currentEnergy <= 25) { fill.style.background = '#7f1d1d'; fill.style.boxShadow = '0 0 10px #7f1d1d'; }
+            else if(currentEnergy >= 75) { fill.style.background = '#10b981'; fill.style.boxShadow = '0 0 20px #10b981'; }
+            else { fill.style.background = '#dc2626'; fill.style.boxShadow = '0 0 20px rgba(220, 38, 38, 0.8)'; }
+        }
+
+        function drainEnergy(btn, word, def) {
+            if(btn.classList.contains('drained')) return;
+            btn.classList.add('drained');
+            currentEnergy = Math.max(0, currentEnergy - 25);
+            updateEnergyMeter();
+            showEnergyInfo(word, def, "Why does this action drain our psychological energy?");
+        }
+
+        function chargeEnergy(btn, word, def) {
+            if(btn.classList.contains('charged')) return;
+            btn.classList.add('charged');
+            currentEnergy = Math.min(100, currentEnergy + 25);
+            updateEnergyMeter();
+            showEnergyInfo(word, def, "Why does this action restore our power?");
+            if(currentEnergy === 100) shootConfetti();
+        }
+
+        function showEnergyInfo(word, def, question) {
+            const hub = document.getElementById('energy-hub');
+            document.getElementById('energy-word').innerText = word;
+            document.getElementById('energy-def').innerText = def;
+            document.getElementById('energy-q').innerText = question;
+            hub.classList.remove('opacity-0');
+        }
+        // ---------------------------------------------------------
+
+        function checkTF(btn, isCorrect, hub) {
+            const btns = btn.parentElement.querySelectorAll('button');
+            btns.forEach(b => b.disabled = true);
+            if(isCorrect) {
+                btn.classList.replace('bg-transparent', 'bg-white');
+                btn.classList.replace('text-gray-500', 'text-black');
+                btn.classList.replace('border-gray-700', 'border-white');
+                document.getElementById(hub).classList.remove('hidden');
+                shootConfetti();
+            } else {
+                btn.classList.add('shake', 'border-arena-red', 'text-arena-red');
+            }
+        }
+
+        function hackLyric(el, hubId) {
+            el.closest('.slide').querySelectorAll('.lyric-hl').forEach(h => h.classList.remove('active'));
+            el.closest('.slide').querySelectorAll('[id^="lh-"]').forEach(h => h.classList.add('hidden'));
+            
+            el.classList.add('active');
+            document.getElementById(hubId).classList.remove('hidden');
+            shootConfetti(0.5);
+        }
+
+        // MECHANICS: ATTITUDE SWITCH
+        function toggleLever() {
+            const container = document.getElementById('grammar-lever');
+            const activeText = document.getElementById('text-active');
+            const passiveText = document.getElementById('text-passive');
+            const lbl1 = document.getElementById('lever-lbl-1');
+            const lbl2 = document.getElementById('lever-lbl-2');
+
+            if(container.classList.contains('lever-state-left')) {
+                container.classList.replace('lever-state-left', 'lever-state-right');
+                activeText.style.opacity = '0'; activeText.style.transform = 'translateX(-20px)';
+                passiveText.style.opacity = '1'; passiveText.style.transform = 'translateX(0)';
+                lbl1.classList.add('opacity-30'); lbl2.classList.remove('opacity-30');
+                shootConfetti();
+            } else {
+                container.classList.replace('lever-state-right', 'lever-state-left');
+                passiveText.style.opacity = '0'; passiveText.style.transform = 'translateX(20px)';
+                activeText.style.opacity = '1'; activeText.style.transform = 'translateX(0)';
+                lbl2.classList.add('opacity-30'); lbl1.classList.remove('opacity-30');
+            }
+        }
+
+        function checkPatch(btn, isCorrect, hub) {
+            const btns = btn.parentElement.querySelectorAll('button');
+            btns.forEach(b => b.disabled = true);
+            if(isCorrect) {
+                btn.classList.replace('bg-black', 'bg-white');
+                btn.classList.replace('text-gray-500', 'text-black');
+                btn.classList.replace('border-[#333]', 'border-white');
+                document.getElementById(hub).classList.remove('hidden');
+                shootConfetti();
+            } else {
+                btn.classList.add('shake', 'border-arena-red', 'text-arena-red');
+            }
+        }
+        
+        // CATCH THE BUG
+        function fixBug() {
+            const w = document.getElementById('bug-word');
+            w.classList.remove('border-[#ef4444]', 'text-[#ef4444]', 'hover:bg-[#ef4444]', 'hover:text-white');
+            w.classList.add('bg-white', 'text-black', 'border-transparent');
+            document.getElementById('bug-input-container').classList.remove('hidden');
+            document.getElementById('bug-input').focus();
+        }
+        
+        function checkBug() {
+            const v = document.getElementById('bug-input').value.toLowerCase().trim();
+            if(v === 'is') {
+                document.getElementById('bug-input-container').classList.add('hidden');
+                const w = document.getElementById('bug-word');
+                w.innerText = "IS"; w.className = 'text-arena-red font-black border-b-2 border-arena-red pb-1';
+                document.getElementById('bug-hub').classList.remove('hidden');
+                shootConfetti();
+            } else {
+                const i = document.getElementById('bug-input');
+                i.classList.add('shake', 'border-[#ef4444]');
+                setTimeout(() => i.classList.remove('shake', 'border-[#ef4444]'), 400);
+            }
+        }
+        
+        // DROP THE BEAT (Sentence Builder - B1 Version)
+        let userSentence = [null, null, null, null, null];
+        const expectedSentence = ["Is", "someone", "getting", "the", "best"];
+
+        function fillTape(btn, word) {
+            let emptyIndex = userSentence.indexOf(null);
+            if (emptyIndex === -1) return;
+
+            userSentence[emptyIndex] = word;
+            btn.classList.add('used');
+            btn.setAttribute('data-target-blank', emptyIndex + 1);
+
+            const b = document.getElementById(`t-blank${emptyIndex + 1}`);
+            if(b) {
+                b.innerText = word;
+                b.classList.add('filled');
+                b.setAttribute('data-original-word', word);
+            }
+
+            if (!userSentence.includes(null)) checkBeat();
+        }
+
+        function returnTape(n) {
+            const b = document.getElementById(`t-blank${n}`);
+            if(!b) return;
+            const word = b.getAttribute('data-original-word');
+            if(!word) return;
+
+            b.innerText = "";
+            b.classList.remove('filled');
+            b.removeAttribute('data-original-word');
+
+            userSentence[n - 1] = null;
+
+            document.querySelectorAll('.tape-piece').forEach(p => {
+                if(p.innerText.toLowerCase() === word.toLowerCase() && p.classList.contains('used')) {
+                    p.classList.remove('used');
+                    p.removeAttribute('data-target-blank');
+                }
+            });
+
+            document.getElementById('tape-hub').classList.add('hidden');
+        }
+
+        function checkBeat() {
+            let isCorrect = true;
+            for(let i=0; i<5; i++) {
+                if(userSentence[i].toLowerCase() !== expectedSentence[i].toLowerCase()) {
+                    isCorrect = false; break;
+                }
+            }
+
+            if(isCorrect) {
+                document.getElementById('tape-hub').classList.remove('hidden');
+                shootConfetti();
+            } else {
+                const container = document.getElementById('t-blanks-container');
+                container.classList.add('shake', 'text-arena-red');
+                setTimeout(() => {
+                    container.classList.remove('shake', 'text-arena-red');
+                    for(let i=1; i<=5; i++) returnTape(i);
+                }, 600);
+            }
+        }
+
+        let tlClick = 0;
+        const tlExp = [1, 2, 3, 4];
+        function selectTimeline(btn) {
+            if(btn.classList.contains('border-white')) return;
+            const ord = parseInt(btn.getAttribute('data-order'));
+            
+            if(ord === tlExp[tlClick]) {
+                tlClick++;
+                btn.classList.replace('border-[#333]', 'border-white');
+                btn.classList.replace('text-gray-400', 'text-white');
+                const num = btn.querySelector('.timeline-number');
+                num.innerText = tlClick;
+                num.classList.remove('hidden');
+                if(tlClick === 4) { document.getElementById('timeline-hub').classList.remove('hidden'); shootConfetti(); }
+            } else {
+                btn.classList.add('shake', 'border-arena-red', 'text-arena-red');
+                setTimeout(() => btn.classList.remove('shake', 'border-arena-red', 'text-arena-red'), 400);
+            }
+        }
+        
+        // NEW MECHANIC: THE GRAFFITI WALL
+        let sprayCount = 0;
+        function sprayWord(el) {
+            if(el.classList.contains('sprayed')) return;
+            el.classList.add('sprayed');
+            sprayCount++;
+            
+            // Optional: play a subtle spray sound if you want (requires audio file)
+            // new Audio('spray.mp3').play();
+            
+            shootConfetti(0.2);
+            
+            if(sprayCount === 4) {
+                setTimeout(() => {
+                    document.getElementById('graffiti-hub').classList.remove('hidden');
+                    shootConfetti(2);
+                }, 500);
+            }
+        }
+
+        const rapQ = [
+            "What usually gets the best of you on a Monday morning?",
+            "Are you giving in to any bad habits right now?",
+            "What is a toxic situation you need to break the chains of?"
+        ];
+        let rapIdx = 0; let rapInt;
+        function startRapid() {
+            document.getElementById('rap-btn').style.display = 'none';
+            document.getElementById('rap-container').classList.replace('border-[#333]', 'border-arena-red');
+            document.getElementById('rap-container').classList.add('shadow-[0_0_30px_rgba(220,38,38,0.3)]');
+            runRapRound();
+        }
+        function runRapRound() {
+            if(rapIdx >= rapQ.length) {
+                document.getElementById('rap-q').innerText = "INTERROGATION SURVIVED.";
+                document.getElementById('rap-q').classList.replace('text-white', 'text-arena-red');
+                document.getElementById('rap-timer').style.width = '0%';
+                shootConfetti(2);
+                return;
+            }
+            document.getElementById('rap-q').innerText = '"' + rapQ[rapIdx] + '"';
+            
+            const flash = document.getElementById('rap-bg-flash');
+            flash.classList.remove('opacity-0');
+            setTimeout(() => flash.classList.add('opacity-0'), 150);
+
+            let w = 100; const bar = document.getElementById('rap-timer');
+            clearInterval(rapInt);
+            rapInt = setInterval(() => {
+                w -= (100/150);
+                bar.style.width = w + '%';
+                if(w <= 0) { clearInterval(rapInt); rapIdx++; runRapRound(); }
+            }, 100);
+        }
+
+        let vnInt; let vnSecs = 45;
+        function startVN() {
+            const btn = document.getElementById('vn-btn');
+            btn.classList.replace('bg-arena-red', 'bg-black');
+            btn.classList.replace('text-white', 'text-arena-red');
+            btn.classList.replace('border-[#111]', 'border-arena-red');
+            document.getElementById('vn-overlay').classList.remove('opacity-0', 'pointer-events-none');
+            vnSecs = 45;
+            document.getElementById('vn-time').innerText = `0:${vnSecs.toString().padStart(2,'0')} / 0:45`;
+            
+            vnInt = setInterval(() => {
+                vnSecs--;
+                document.getElementById('vn-time').innerText = `0:${vnSecs.toString().padStart(2,'0')} / 0:45`;
+                document.getElementById('vn-prog').style.width = `${((45-vnSecs)/45)*100}%`;
+                if(vnSecs <= 0) stopVN();
+            }, 1000);
+        }
+        function stopVN() {
+            clearInterval(vnInt);
+            const btn = document.getElementById('vn-btn');
+            btn.classList.replace('bg-black', 'bg-arena-red');
+            btn.classList.replace('text-arena-red', 'text-white');
+            btn.classList.replace('border-arena-red', 'border-[#111]');
+            document.getElementById('vn-overlay').classList.add('opacity-0', 'pointer-events-none');
+            if(vnSecs < 42) { document.getElementById('vn-hub').classList.remove('hidden'); shootConfetti(); }
+        }
+
+        let crossInt;
+        function selectPath(color) {
+            document.getElementById('cross-options').style.display = 'none';
+            const tmr = document.getElementById('cross-timer');
+            tmr.classList.replace('hidden', 'flex');
+            tmr.classList.add('border-' + color);
+            if(color === 'white') {
+                tmr.classList.add(`shadow-[0_0_30px_rgba(255,255,255,0.4)]`);
+            } else {
+                tmr.classList.add(`shadow-[0_0_30px_rgba(220,38,38,0.6)]`);
+            }
+            
+            let w = 100; let secs = 30;
+            const bar = document.getElementById('ct-bar');
+            bar.classList.add('bg-' + color);
+            
+            crossInt = setInterval(() => {
+                w -= (100/300); bar.style.width = w + '%';
+                if(w % (100/30) < (100/300)) { secs--; document.getElementById('ct-clock').innerText = `0:${secs.toString().padStart(2,'0')}`; }
+                if(w <= 0) { 
+                    clearInterval(crossInt); 
+                    document.getElementById('ct-title').innerText = "TIME IS UP."; 
+                    document.getElementById('ct-clock').classList.add(`text-${color}`);
+                    shootConfetti(); 
+                }
+            }, 100);
+        }
+
+        function rate(stars) {
+            document.querySelectorAll('.star').forEach((s, i) => {
+                if(i < stars) s.classList.remove('opacity-30', 'grayscale');
+                else s.classList.add('opacity-30', 'grayscale');
+            });
+            shootConfetti();
+        }
+
+        function shootConfetti(sec=1) {
+            if (typeof confetti !== 'function') return;
+            var duration = sec * 1000; var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#dc2626', '#a1a1aa', '#ffffff'] });
+                confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#dc2626', '#a1a1aa', '#ffffff'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        window.onload = updateStage;
+    </script>
+</body>
+</html>
